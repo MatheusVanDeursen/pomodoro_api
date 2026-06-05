@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------------
+// MODELS
+// ------------------------------------------------------------------
+
+model User {
+  id            String            @id @default(uuid())
+  email         String?           @unique
+  passwordHash  String?
+  createdAt     DateTime          @default(now())
+  
+  sessions      PomodoroSession[]
+  categories    Category[]
+  customPresets TimePreset[]
+  tasks         Task[]
+}
+
+model Task {
+  id        String            @id @default(uuid())
+  title     String
+  isDone    Boolean           @default(false)
+  createdAt DateTime          @default(now())
+
+  user      User              @relation(fields: [userId], references: [id])
+  userId    String
+
+  sessions  PomodoroSession[] // Histórico de pomodoros gastos nesta tarefa
+}
+
+model Category {
+  id        String            @id @default(uuid())
+  name      String
+  
+  user      User              @relation(fields: [userId], references: [id])
+  userId    String
+  
+  sessions  PomodoroSession[]
+}
+
+model TimePreset {
+  id         String   @id @default(uuid())
+  name       String
+  focusTime  Int
+  shortBreak Int
+  longBreak  Int
+  isGlobal   Boolean  @default(false)
+  
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?  
+}
+
+model PomodoroSession {
+  id          String        @id @default(uuid())
+  title       String?
+  description String?
+  startTime   DateTime      @default(now())
+  endTime     DateTime? 
+  duration    Int?
+  status      SessionStatus @default(COMPLETED)
+
+  user        User          @relation(fields: [userId], references: [id])
+  userId      String
+
+  category    Category?     @relation(fields: [categoryId], references: [id])
+  categoryId  String?
+
+  task        Task?         @relation(fields: [taskId], references: [id])
+  taskId      String?       // Relacionamento opcional com a Tarefa
+}
+
+// ------------------------------------------------------------------
+// ENUMS
+// ------------------------------------------------------------------
+
+enum SessionStatus {
+  COMPLETED
+  INTERRUPTED
+}
