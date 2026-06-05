@@ -1,4 +1,5 @@
 const userDAO = require('../daos/UserDAO');
+const AppError = require('../utils/AppError');
 
 class UserService {
   /**
@@ -8,7 +9,7 @@ class UserService {
   async ensureGhostUserExists(uuid) {
     // Regra de negócio: Não podemos operar sem um UUID
     if (!uuid) {
-      throw new Error('O UUID é obrigatório para autenticação fantasma.');
+      throw new AppError('O UUID é obrigatório para autenticação fantasma.', 401);
     }
 
     // Tenta encontrar o usuário

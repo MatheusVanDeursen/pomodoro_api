@@ -34,6 +34,21 @@ class SessionDAO {
       orderBy: { startTime: 'desc' }
     });
   }
+
+  async update(id, userId, updateData) {
+    const result = await prisma.pomodoroSession.updateMany({
+      where: { id, userId },
+      data: updateData
+    });
+    return result.count > 0;
+  }
+
+  async delete(id, userId) {
+    const result = await prisma.pomodoroSession.deleteMany({
+      where: { id, userId }
+    });
+    return result.count > 0;
+  }
 }
 
 module.exports = new SessionDAO();

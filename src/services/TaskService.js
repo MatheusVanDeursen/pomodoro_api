@@ -1,31 +1,46 @@
 const taskDAO = require('../daos/TaskDAO');
+const AppError = require('../utils/AppError');
 
 class TaskService {
   async createTask(title, userId) {
-    if (!title || title.trim() === '') {
-      throw new Error('O título da tarefa não pode estar vazio.');
-    }
-    if (!userId) {
-      throw new Error('ID do usuário é obrigatório para criar uma tarefa.');
-    }
-
-    return await taskDAO.create(title.trim(), userId);
+    return await taskDAO.create(title, userId);
   }
 
-  async getUserTasks(userId) {
-    if (!userId) {
-      throw new Error('ID do usuário é obrigatório para buscar tarefas.');
-    }
-    return await taskDAO.findByUserId(userId);
-  }
-
-  async toggleTaskStatus(taskId, isDone) {
-    if (!taskId) {
-      throw new Error('O ID da tarefa é obrigatório para atualizar o status.');
-    }
+  async getUserTasks(userId, page, limit) {
+    const skip = (page - 1) * limit;
     
-    // Poderíamos adicionar uma validação aqui para checar se a tarefa existe antes
-    return await taskDAO.updateStatus(taskId, !!isDone);
+    const { tasks, total } = await taskDAO.findByUserId(userId, skip, limit);
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: tasks,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages
+      }
+    };
+  }
+
+  async updateTask(taskId, userId, updateData) {
+    const wasUpdated = await taskDAO.update(taskId, userId, updateData);
+    
+    if (!wasUpdated) {
+      throw new AppError('Tarefa não encontrada ou não pertence a este usuário.', 404);
+    }
+
+    return { message: 'Tarefa atualizada com sucesso.' };
+  }
+
+  async deleteTask(taskId, userId) {
+    const wasDeleted = await taskDAO.delete(taskId, userId);
+    
+    if (!wasDeleted) {
+      throw new AppError('Tarefa não encontrada ou não pertence a este usuário.', 404);
+    }
+
+    return { message: 'Tarefa deletada com sucesso.' };
   }
 }
 
